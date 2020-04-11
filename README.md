@@ -1,6 +1,6 @@
 # POC: Pull to refresh
 
-It demonstrates how to implements a slightly custom [Push-to-refresh](https://en.wikipedia.org/wiki/Pull-to-refresh) pattern using [Flatlist](https://reactnative.dev/docs/flatlist) component.
+It demonstrates how to implements a slightly customized [Push-to-refresh](https://en.wikipedia.org/wiki/Pull-to-refresh) pattern using [Flatlist](https://reactnative.dev/docs/flatlist) component.
 
 ## How to run
 
