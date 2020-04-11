@@ -1,24 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
-  ScrollView,
   StatusBar,
   FlatList,
   Text,
   StyleSheet,
   TouchableNativeFeedback,
   View,
+  RefreshControl,
+  useWindowDimensions,
+  Button,
 } from 'react-native';
+
+async function wait(timeInMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    const handle = setTimeout(() => {
+      resolve();
+      clearTimeout(handle);
+    }, timeInMs);
+  });
+}
 
 export interface ListItem {
   id: string;
   text: string;
 }
 
-export function createListItem(index: number): ListItem {
+export function createListItem(): ListItem {
   return {
-    id: index.toString(),
-    text: Math.random() + '-' + Date.now(),
+    id: Math.random().toString(),
+    text: new Date().toString(),
   };
 }
 
@@ -29,7 +40,6 @@ export const ListItemComponent: React.FC<ListItem> = (props) => {
       width: '100%',
     },
     text: {
-      padding: 16,
       fontSize: 16,
     },
   });
@@ -43,25 +53,79 @@ export const ListItemComponent: React.FC<ListItem> = (props) => {
   );
 };
 
+export const EmptyState: React.FC = () => {
+  const window = useWindowDimensions();
+  const style = StyleSheet.create({
+    container: {
+      width: window.width,
+      height: window.height,
+      justifyContent: 'center',
+    },
+    title: {
+      fontSize: 26,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: 18,
+      textAlign: 'center',
+    },
+  });
+
+  return (
+    <View style={style.container}>
+      <Text style={style.title}>Empty log list</Text>
+      <Text style={style.subtitle}>Swipe from top to bottom to load data</Text>
+    </View>
+  );
+};
+
 const App: React.FC = (): React.ReactElement => {
+  const window = useWindowDimensions();
+  const style = StyleSheet.create({
+    container: {
+      flexDirection: 'column',
+      justifyContent: 'flex-end',
+    },
+    list: {
+      width: window.width,
+      height: window.height,
+    },
+  });
+
   const [items, setItems] = useState<ListItem[]>([]);
+  const [isLoading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    const listItems = Array(10)
-      .fill(0)
-      .map((_, index: number) => createListItem(index));
-
-    setItems(listItems);
-  }, []);
+  const onRefresh = async (): Promise<void> => {
+    setLoading(true);
+    await wait(500);
+    setItems((previous: ListItem[]) => [createListItem(), ...previous]);
+    await wait(1500);
+    setLoading(false);
+  };
 
   return (
     <>
       <StatusBar />
       <SafeAreaView>
-        <FlatList
-          data={items}
-          renderItem={(props) => ListItemComponent(props.item)}
-        />
+        <View style={style.container}>
+          <FlatList
+            style={style.list}
+            data={items}
+            renderItem={(props) => ListItemComponent(props.item)}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={onRefresh}
+                colors={['#ffea53']}
+                progressBackgroundColor={'#2b7489'}
+              />
+            }
+            ListEmptyComponent={EmptyState}
+          />
+          {items.length !== 0 ? (
+            <Button title={'Clear'} onPress={() => setItems([])} />
+          ) : null}
+        </View>
       </SafeAreaView>
     </>
   );
